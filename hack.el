@@ -19,22 +19,22 @@
 ;;  Just for me to learn some lisp!
 ;;
 ;;; TODO:
-;;  - Save pointer position in vector before marking
-;;  - Return so saved pointer position after marking
-;;  - Simplify get- and set-square functions
-;;  - Place @ to area
-;;  - Let it move with hjkl keys or, if not possible, width arrow keys
-;;  - Define impassable terrain
-;;  - Remove tictactoe player functions
-;;  - Do I need a game/tick loop?
-;;  - Add colors (http://ergoemacs.org/emacs/elisp_define_face.html)
+;;  -[X] Save pointer position in vector before marking
+;;  -[X] Return so saved pointer position after marking
+;;  -[X] Simplify get- and set-square functions
+;;  -[ ] Place @ to area
+;;  -[ ] Let it move with hjkl keys or, if not possible, width arrow keys
+;;  -[ ] Define impassable terrain
+;;  -[ ] Remove tictactoe player functions
+;;  -[ ] Do I need a game/tick loop?
+;;  -[ ] Add colors (http://ergoemacs.org/emacs/elisp_define_face.html)
 ;;; Code:
 
 ;; Constants
-(defconst *hack-area-height* 16
+(defconst *hack-area-height* 32
   "The height of the area.")
 
-(defconst *hack-area-width* 32
+(defconst *hack-area-width* 64
   "The width of the area.")
 
 ;; Global variables
@@ -79,7 +79,7 @@
     (erase-buffer)
     (dotimes (row *hack-area-height*)
       (dotimes (column *hack-area-width*)
-        (insert (hack-get-square row column)))
+        (insert (hack-get-square (1- (line-number-at-pos)) (current-column))))
       (insert "\n"))))
 
 ;; v current-column
@@ -88,19 +88,24 @@
 ;; 6 7 8
 (defun hack-get-square (row column)
   "Get the value in the (row, column) square."
-  (elt *hack-area* (+ (* (1- (line-number-at-pos)) *hack-area-width*) (current-column))))
+  (elt *hack-area* (+ (* row *hack-area-width*) column)))
 
 (defun hack-set-square (row column value)
   "Set the value in the (row, column) square to value."
-  (aset *hack-area* (+ (* (1- (line-number-at-pos)) *hack-area-width*) (current-column)) value))
+  (aset *hack-area* (+ (* row *hack-area-width*) column) value))
+
+(defvar *hack-point-before-marking* 0
+  "The point before marking.")
 
 (defun hack-mark ()
   "Mark the current square."
   (interactive)
   (let ((row (1- (line-number-at-pos)))
         (column (current-column)))
-    (hack-set-square row column *hack-current-player*))
+    (hack-set-square row column *hack-current-player*)
+    (setq *hack-point-before-marking* (point)))
   (hack-print-board)
+  (goto-char *hack-point-before-marking*)
   (hack-swap-players))
 
 
